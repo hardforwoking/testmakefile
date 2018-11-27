@@ -1,0 +1,32 @@
+SHELL=/bin/bash
+this.makefile=$(lastword $(MAKEFILE_LIST))
+this.dir=$(dir $(realpath ${this.makefile}))
+src.dir=${this.dir}src/main/java
+generated.dir=${this.dir}src/main/generated-sources
+tmp.dir=${this.dir}_tmp
+tmp.mft=${tmp.dir}/META-INF/MANIFEST.MF
+export dist.dir?=${this.dir}dist
+ANT?=ant
+JAVAC?=javac
+JAVA?=java
+JAR?=jar
+XJC?=xjc
+lib.dir?=lib
+EMPTY :=
+SPACE := $(EMPTY) $(EMPTY)
+commons.codec.jars = \
+	$(lib.dir)/commons-codec/commons-codec/1.10/commons-codec-1.10.jar
+slf4j.jars  = \
+	$(lib.dir)/org/slf4j/slf4j-api/1.7.13/slf4j-api-1.7.13.jar \
+	$(lib.dir)/org/slf4j/slf4j-simple/1.7.13/slf4j-simple-1.7.13.jar \
+apache.commons.cli.jars  = \
+	$(lib.dir)/commons-cli/commons-cli/1.3.1/commons-cli-1.3.1.jar
+.PHONY: all test
+all: j4make
+test: j4make
+	${MAKE} -dnrB j4make | java -jar dist/j4make.jar -f XML  | xmllint --format -
+	${MAKE} -dnrB j4make | java -jar dist/j4make.jar -f GEXF  | xmllint --format -
+	${MAKE} -dnrB -C . -f Makefile j4make | java -jar dist/j4make.jar -f XML  | xmllint --format -
+$(eval $(call compile-cmd,j4make,com.github.lindenb.j4make.J4Make,${commons.codec.jars}))
+${all_maven_jars}  : 
+	mkdir -p $(dir $@) && wget -O "$@" "http://central.maven.org/maven2/$(patsubst ${lib.dir}/%,%,$@)"
